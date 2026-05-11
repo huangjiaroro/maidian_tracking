@@ -10,6 +10,21 @@
       "args": ["--json", "config", "show"],
       "expect_exit_code": 0,
       "expect_stdout_contains": ["\"skillhub_env\":", "\"base_url\":"]
+    },
+    {
+      "args": [
+        "--env",
+        "ainvest",
+        "--json",
+        "data",
+        "config"
+      ],
+      "expect_exit_code": 0,
+      "expect_stdout_contains": [
+        "\"easy_fetch_base_url\": \"https://cbas-gateway.ainvest.com:1443/sdmp/easyfetch\"",
+        "\"sql_environment\": \"ainvest\"",
+        "\"timeout\": 300"
+      ]
     }
   ]
 }

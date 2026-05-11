@@ -1,0 +1,88 @@
+{
+  "version": 1,
+  "skill": "manage-tracking",
+  "routing": [
+    {
+      "id": "positive-track-key-search",
+      "prompt": "帮我查一下 ths_home_click 这个埋点在哪些页面或元素上使用",
+      "expect_load": true,
+      "reason": "Direct trackKey/stat_id lookup intent."
+    },
+    {
+      "id": "positive-natural-language-lookup",
+      "prompt": "AInvest 里 aime 无处不在按钮对应哪些埋点？不要漏掉其他应用候选",
+      "expect_load": true,
+      "expected_file_reads": [
+        "references/ainvest/tracking-wiki/index.md",
+        "references/ainvest/tracking-wiki/concepts/query-playbook.md",
+        "references/ainvest/tracking-wiki/entities/lookups/page-lookup.md",
+        "references/ainvest/tracking-wiki/entities/lookups/section-lookup.md",
+        "references/ainvest/tracking-wiki/entities/lookups/element-lookup.md"
+      ],
+      "reason": "Natural-language tracking lookup requires the AInvest wiki and cross-app lookups."
+    },
+    {
+      "id": "positive-data-query",
+      "prompt": "查询 ths_demo_click 这个埋点 2026-05-01 到 2026-05-07 的 PV 和 UV",
+      "expect_load": true,
+      "expected_file_reads": [
+        "references/data-query.md"
+      ],
+      "reason": "Tracking PV/UV SQL requires the data-query reference."
+    },
+    {
+      "id": "positive-relation-lookup",
+      "prompt": "查一下 AInvest 里 lhs_home_click 的前序和后序埋点关系",
+      "expect_load": true,
+      "expected_file_reads": [
+        "references/ainvest/tracking-wiki/index.md",
+        "references/ainvest/tracking-wiki/concepts/relation-model.md",
+        "references/ainvest/tracking-wiki/entities/relations/high-degree-tracks.md",
+        "references/ainvest/tracking-wiki/entities/relations/relation-components.md"
+      ],
+      "reason": "AInvest relation questions use snapshot relation files."
+    },
+    {
+      "id": "negative-generic-bi-analysis",
+      "prompt": "帮我分析昨天用户活跃下降的原因，并给运营策略建议",
+      "expect_load": false,
+      "forbidden_file_reads": [
+        "references/data-query.md",
+        "references/prod/tracking-wiki/index.md",
+        "references/ainvest/tracking-wiki/index.md"
+      ],
+      "reason": "Generic diagnosis and strategy advice should not trigger this skill without tracking-data lookup intent."
+    },
+    {
+      "id": "negative-general-sql-help",
+      "prompt": "帮我优化这段 PostgreSQL 查询计划",
+      "expect_load": false,
+      "reason": "General SQL tuning is outside tracking management and EasyFetch tracking-data lookup."
+    }
+  ],
+  "progressive_loading": [
+    {
+      "id": "crud-no-wiki",
+      "prompt": "列出 prod 环境所有 app，并用 JSON 返回",
+      "expected_file_reads": [],
+      "forbidden_file_reads": [
+        "references/data-query.md",
+        "references/prod/tracking-wiki/index.md",
+        "references/ainvest/tracking-wiki/index.md"
+      ],
+      "reason": "Simple CLI CRUD/list operations should not load heavyweight references."
+    },
+    {
+      "id": "prod-natural-language-lookup",
+      "prompt": "同花顺手炒首页搜索按钮对应的埋点是什么？",
+      "expected_file_reads": [
+        "references/prod/tracking-wiki/index.md",
+        "references/prod/tracking-wiki/concepts/query-playbook.md",
+        "references/prod/tracking-wiki/entities/lookups/page-lookup.md",
+        "references/prod/tracking-wiki/entities/lookups/section-lookup.md",
+        "references/prod/tracking-wiki/entities/lookups/element-lookup.md"
+      ],
+      "reason": "Natural-language lookup in prod requires the prod wiki indexes."
+    }
+  ]
+}

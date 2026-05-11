@@ -7,6 +7,7 @@ import os
 import ssl
 import tempfile
 import urllib.error
+import urllib.parse
 import urllib.request
 from pathlib import Path
 from typing import Any, Optional
@@ -165,7 +166,10 @@ class ApiClient:
         url = self._build_url(path)
 
         if params:
-            query_string = "&".join(f"{key}={value}" for key, value in params.items() if value is not None)
+            query_string = urllib.parse.urlencode(
+                {key: value for key, value in params.items() if value is not None},
+                doseq=True,
+            )
             if query_string:
                 url = f"{url}?{query_string}"
 

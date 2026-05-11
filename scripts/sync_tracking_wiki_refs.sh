@@ -6,7 +6,7 @@ setopt null_glob
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 SKILL_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 SOURCE_WIKI_ROOT="${1:-/Users/zyhjr/Desktop/source/llm-wiki-skill/tracking-wiki}"
-TARGET_ROOT="${2:-$SKILL_ROOT/references/tracking-wiki}"
+TARGET_ROOT="${2:-$SKILL_ROOT/references/prod/tracking-wiki}"
 
 if [[ ! -f "$SOURCE_WIKI_ROOT/wiki/index.md" ]]; then
   echo "Missing source wiki index: $SOURCE_WIKI_ROOT/wiki/index.md" >&2

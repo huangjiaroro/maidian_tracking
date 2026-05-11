@@ -14,6 +14,13 @@ from .core.api import ManageTrackingApi
 from .core.client import ApiClient, ApiError
 from .core.config import CliConfig, resolve_base_url, resolve_cert
 from .core.session import Session, create_session
+from .core.sql_fetch import (
+    SqlFetchConfig,
+    download_sql_result,
+    explain_sql,
+    get_catalog_name,
+    preview_sql_result,
+)
 from .env import read_skillhub_env
 
 
@@ -53,6 +60,48 @@ def handle_api_error(exc: ApiError) -> None:
     else:
         print(f"Error: {exc.message}", file=sys.stderr)
     raise SystemExit(1)
+
+
+def handle_cli_error(message: str) -> None:
+    if _json_output:
+        print(json.dumps({"error": message}, indent=2))
+    else:
+        print(f"Error: {message}", file=sys.stderr)
+    raise SystemExit(1)
+
+
+def read_sql_input(sql: Optional[str], sql_file: Optional[str]) -> str:
+    if bool(sql) == bool(sql_file):
+        handle_cli_error("Provide exactly one of --sql or --sql-file")
+    if sql_file:
+        try:
+            return open(sql_file, encoding="utf-8").read()
+        except OSError as exc:
+            handle_cli_error(f"Failed to read SQL file: {exc}")
+    return sql or ""
+
+
+def make_sql_fetch_config(
+    ctx: click.Context,
+    *,
+    easy_fetch_url: Optional[str],
+    cbas_email: Optional[str],
+    sql_env: Optional[str],
+    cert_path: Optional[str],
+    cert_password: Optional[str],
+    timeout: int,
+) -> SqlFetchConfig:
+    session: Session = ctx.obj["session"]
+    explicit_env = ctx.obj.get("explicit_env")
+    return SqlFetchConfig.from_values(
+        base_url=easy_fetch_url,
+        environment=sql_env or explicit_env,
+        cert_path=cert_path,
+        cert_password=cert_password,
+        email=cbas_email,
+        session=session,
+        timeout=timeout,
+    )
 
 
 @click.group()
@@ -126,6 +175,7 @@ def cli(
     ctx.ensure_object(dict)
     ctx.obj["session"] = session
     ctx.obj["api"] = _api
+    ctx.obj["explicit_env"] = env.lower() if env else None
 
 
 @cli.command("ping")
@@ -496,6 +546,182 @@ def track_delete(ctx: click.Context, id: int) -> None:
         output(api.delete_track(id))
     except ApiError as exc:
         handle_api_error(exc)
+
+
+@cli.group("data")
+def data_group() -> None:
+    """Tracking data SQL execution commands."""
+
+
+@data_group.command("preview")
+@click.option("--sql", help="SQL text to execute")
+@click.option("--sql-file", help="Path to a SQL file to execute")
+@click.option(
+    "--datasource-name",
+    type=click.Choice(["presto-hive", "starrocks"]),
+    default="presto-hive",
+    show_default=True,
+)
+@click.option("--easy-fetch-url", help="EasyFetch base URL")
+@click.option("--cbas-email", help="CBAS_EMAIL request header")
+@click.option("--sql-env", help="THS_TIER-style SQL environment for catalog mapping")
+@click.option("--cert-path", help="Certificate path for HTTPS mTLS")
+@click.option("--cert-password", help="Certificate password")
+@click.option("--timeout", default=300, show_default=True, help="Request timeout in seconds")
+@click.pass_context
+def data_preview(
+    ctx: click.Context,
+    sql: Optional[str],
+    sql_file: Optional[str],
+    datasource_name: str,
+    easy_fetch_url: Optional[str],
+    cbas_email: Optional[str],
+    sql_env: Optional[str],
+    cert_path: Optional[str],
+    cert_password: Optional[str],
+    timeout: int,
+) -> None:
+    """Preview SQL result through EasyFetch."""
+
+    query_sql = read_sql_input(sql, sql_file)
+    config = make_sql_fetch_config(
+        ctx,
+        easy_fetch_url=easy_fetch_url,
+        cbas_email=cbas_email,
+        sql_env=sql_env,
+        cert_path=cert_path,
+        cert_password=cert_password,
+        timeout=timeout,
+    )
+    output(preview_sql_result(query_sql, datasource_name, config))
+
+
+@data_group.command("download")
+@click.option("--sql", help="SQL text to execute")
+@click.option("--sql-file", help="Path to a SQL file to execute")
+@click.option(
+    "--datasource-name",
+    type=click.Choice(["presto-hive", "starrocks"]),
+    default="presto-hive",
+    show_default=True,
+)
+@click.option("--project-path", default=".", show_default=True, help="Project root for data_file/intermediate output")
+@click.option("--easy-fetch-url", help="EasyFetch base URL")
+@click.option("--cbas-email", help="CBAS_EMAIL request header")
+@click.option("--sql-env", help="THS_TIER-style SQL environment for catalog mapping")
+@click.option("--cert-path", help="Certificate path for HTTPS mTLS")
+@click.option("--cert-password", help="Certificate password")
+@click.option("--timeout", default=300, show_default=True, help="Request timeout in seconds")
+@click.pass_context
+def data_download(
+    ctx: click.Context,
+    sql: Optional[str],
+    sql_file: Optional[str],
+    datasource_name: str,
+    project_path: str,
+    easy_fetch_url: Optional[str],
+    cbas_email: Optional[str],
+    sql_env: Optional[str],
+    cert_path: Optional[str],
+    cert_password: Optional[str],
+    timeout: int,
+) -> None:
+    """Download full SQL result to data_file/intermediate as CSV."""
+
+    query_sql = read_sql_input(sql, sql_file)
+    config = make_sql_fetch_config(
+        ctx,
+        easy_fetch_url=easy_fetch_url,
+        cbas_email=cbas_email,
+        sql_env=sql_env,
+        cert_path=cert_path,
+        cert_password=cert_password,
+        timeout=timeout,
+    )
+    output(download_sql_result(query_sql, datasource_name, project_path, config))
+
+
+@data_group.command("explain")
+@click.option("--sql", help="SQL text to explain")
+@click.option("--sql-file", help="Path to a SQL file to explain")
+@click.option(
+    "--datasource-name",
+    type=click.Choice(["presto-hive", "starrocks"]),
+    default="presto-hive",
+    show_default=True,
+)
+@click.option("--easy-fetch-url", help="EasyFetch base URL")
+@click.option("--cbas-email", help="CBAS_EMAIL request header")
+@click.option("--sql-env", help="THS_TIER-style SQL environment for catalog mapping")
+@click.option("--cert-path", help="Certificate path for HTTPS mTLS")
+@click.option("--cert-password", help="Certificate password")
+@click.option("--timeout", default=300, show_default=True, help="Request timeout in seconds")
+@click.pass_context
+def data_explain(
+    ctx: click.Context,
+    sql: Optional[str],
+    sql_file: Optional[str],
+    datasource_name: str,
+    easy_fetch_url: Optional[str],
+    cbas_email: Optional[str],
+    sql_env: Optional[str],
+    cert_path: Optional[str],
+    cert_password: Optional[str],
+    timeout: int,
+) -> None:
+    """Explain SQL through EasyFetch."""
+
+    query_sql = read_sql_input(sql, sql_file)
+    config = make_sql_fetch_config(
+        ctx,
+        easy_fetch_url=easy_fetch_url,
+        cbas_email=cbas_email,
+        sql_env=sql_env,
+        cert_path=cert_path,
+        cert_password=cert_password,
+        timeout=timeout,
+    )
+    output(explain_sql(query_sql, datasource_name, config))
+
+
+@data_group.command("config")
+@click.option("--easy-fetch-url", help="EasyFetch base URL")
+@click.option("--cbas-email", help="CBAS_EMAIL request header")
+@click.option("--sql-env", help="THS_TIER-style SQL environment for catalog mapping")
+@click.option("--cert-path", help="Certificate path for HTTPS mTLS")
+@click.option("--cert-password", help="Certificate password")
+@click.option("--timeout", default=300, show_default=True, help="Request timeout in seconds")
+@click.pass_context
+def data_config(
+    ctx: click.Context,
+    easy_fetch_url: Optional[str],
+    cbas_email: Optional[str],
+    sql_env: Optional[str],
+    cert_path: Optional[str],
+    cert_password: Optional[str],
+    timeout: int,
+) -> None:
+    """Show SQL execution configuration without secrets."""
+
+    config = make_sql_fetch_config(
+        ctx,
+        easy_fetch_url=easy_fetch_url,
+        cbas_email=cbas_email,
+        sql_env=sql_env,
+        cert_path=cert_path,
+        cert_password=cert_password,
+        timeout=timeout,
+    )
+    output(
+        {
+            "easy_fetch_base_url": config.base_url,
+            "sql_environment": config.environment,
+            "has_cert": bool(config.cert_path),
+            "email": config.email,
+            "starrocks_catalog": get_catalog_name("starrocks", config.environment),
+            "timeout": config.timeout,
+        }
+    )
 
 
 @cli.group("config")
