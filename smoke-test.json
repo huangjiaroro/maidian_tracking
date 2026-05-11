@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "commands": [
+    {
+      "args": ["--json", "ping"],
+      "expect_exit_code": 0,
+      "expect_stdout_contains": ["\"status\": \"ok\"", "\"entrypoint\": \"manage-tracking\""]
+    },
+    {
+      "args": ["--json", "config", "show"],
+      "expect_exit_code": 0,
+      "expect_stdout_contains": ["\"skillhub_env\":", "\"base_url\":"]
+    }
+  ]
+}

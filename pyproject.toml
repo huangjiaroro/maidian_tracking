@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "manage-tracking"
+version = "0.1.0"
+description = "CLI skill for managing tracking resources"
+readme = { file = "SKILL.md", content-type = "text/markdown" }
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "click==8.1.8",
+  "cryptography==44.0.3",
+]
+
+[project.scripts]
+manage-tracking = "manage_tracking.skillhub_entry:main"
+
+[tool.setuptools.packages.find]
+include = ["manage_tracking*"]
