@@ -15,7 +15,7 @@ tags:
 
 # 埋点查询策略
 
-埋点信息查询默认以 wiki 知识库优先；只有 wiki 查不到、用户明确要求实时复核，或执行简单 CRUD / list 命令时，才调用 `manage-tracking` 管理 CLI 兜底。
+埋点信息查询默认以 wiki 知识库优先；只有 wiki 查不到、用户明确要求实时复核，或执行简单 CRUD / list 命令时，才调用 `tracking-query` 管理 CLI 兜底。
 
 当用户用自然语言提问时，按下面顺序定位埋点：
 

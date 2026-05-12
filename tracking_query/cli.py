@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""manage-tracking CLI."""
+"""tracking-query CLI."""
 
 from __future__ import annotations
 
@@ -88,7 +88,7 @@ def cli(
     json_output: bool,
     debug: bool,
 ) -> None:
-    """manage-tracking - CLI for tracking point management."""
+    """tracking-query - CLI for tracking point management."""
 
     global _json_output, _api
 
@@ -121,7 +121,7 @@ def ping(ctx: click.Context) -> None:
     output(
         {
             "status": "ok",
-            "entrypoint": "manage-tracking",
+            "entrypoint": "tracking-query",
             **runtime.status(),
         }
     )
@@ -622,7 +622,7 @@ def repl(ctx: click.Context) -> None:
         "json": lambda value: print(json.dumps(value, indent=2)),
     }
     banner = """
-manage-tracking REPL
+tracking-query REPL
 Available objects:
   api     - ManageTrackingApi instance
   runtime - RuntimeConfig instance

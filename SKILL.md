@@ -1,19 +1,19 @@
 ---
-name: manage-tracking
+name: tracking-query
 name_zh: 用户行为埋点查询
 description: 当明确提及需要查询用户行为埋点的定义，明细数据和统计数据(如埋点的UV，PV)时触发
 artifact_type: cli
 runtime: python
 python_version: 3.12.10
 offline_install: true
-entrypoint: manage-tracking
+entrypoint: tracking-query
 ---
 
-# manage-tracking
+# tracking-query
 
 ## 概览
 
-`manage-tracking` 是埋点管理系统的命令行入口。当前项目已经按 SkillHub Python CLI 源码包约定整理，可直接通过 `pyproject.toml` 安装，并由 SkillHub CLI 的统一安装器完成离线安装、wrapper 生成和 smoke test 校验。
+`tracking-query` 是埋点管理系统的命令行入口。当前项目已经按 SkillHub Python CLI 源码包约定整理，可直接通过 `pyproject.toml` 安装，并由 SkillHub CLI 的统一安装器完成离线安装、wrapper 生成和 smoke test 校验。
 
 ## 核心能力
 
@@ -35,7 +35,7 @@ entrypoint: manage-tracking
 - `smoke-test.json`
 - `cli-capabilities.csv`
 - `.skillhubignore`
-- `manage_tracking/`
+- `tracking_query/`
 - `references/tracking-wiki/`
 - `scripts/sync_tracking_wiki_refs.sh`
 
@@ -44,7 +44,7 @@ entrypoint: manage-tracking
 默认先执行：
 
 ```sh
-manage-tracking --json ping
+tracking-query --json ping
 ```
 
 `ping` 只验证 CLI 入口和本地配置加载，不会访问后端；不能据此判断网络或 API 是否可达。需要确认真实接口时，用只读的 `list`、`search` 或 `auth whoami`。
@@ -52,7 +52,7 @@ manage-tracking --json ping
 如果只是确认本地配置，也可以先看：
 
 ```sh
-manage-tracking --json config show
+tracking-query --json config show
 ```
 
 如果报命令不存在、证书错误、URL 错误或 API 错误，再看 `assets/SETUP_GUIDE.md` 完成初始化。
@@ -69,16 +69,16 @@ manage-tracking --json config show
   - `ssl_cert_file`
   - `ssl_cert_password`
   - `user_email`
-- `registry`、`openclaw_skill_dir`、`ssl_legacy_mode` 等字段属于 SkillHub CLI 安装 / 平台配置，不参与 manage-tracking 运行时鉴权
+- `registry`、`openclaw_skill_dir`、`ssl_legacy_mode` 等字段属于 SkillHub CLI 安装 / 平台配置，不参与 tracking-query 运行时鉴权
 - 当前 `ping` / `config show` 输出不包含 `environment`、`has_token`；如果出现这些字段，说明执行到旧版 CLI 或旧 wrapper
 
 常用命令：
 
 ```sh
-manage-tracking app list
-manage-tracking --json track list --app-id 12
-manage-tracking track search home_click
-manage-tracking config show
+tracking-query app list
+tracking-query --json track list --app-id 12
+tracking-query track search home_click
+tracking-query config show
 ```
 
 ## 埋点数据查询
@@ -136,7 +136,7 @@ App
 
 ## 知识库联动流程
 
-埋点信息查询默认以 wiki 知识库优先；只有 wiki 查不到、用户明确要求实时复核，或执行简单 CRUD / list 命令时，才调用 `manage-tracking` 管理 CLI。埋点 PV/UV/明细查询属于数据查询，按 `references/data-query.md` 生成 SQL 并用 `data` 命令执行。
+埋点信息查询默认以 wiki 知识库优先；只有 wiki 查不到、用户明确要求实时复核，或执行简单 CRUD / list 命令时，才调用 `tracking-query` 管理 CLI。埋点 PV/UV/明细查询属于数据查询，按 `references/data-query.md` 生成 SQL 并用 `data` 命令执行。
 
 当用户没有直接提供 `trackKey`，而是用自然语言描述埋点时，按下面顺序执行：
 
@@ -150,14 +150,14 @@ App
    - 如果问题涉及前后序关系，再搜 `entities/relations/`，补充高连接埋点和关系覆盖情况。
 4. 同一个页面、区块或元素可能同时存在于多个应用，例如 `aime无处不在` 可出现在 `aime`、`lhsa`、`lhssc`、`lhsps`、`lhspt`、`lhsws` 等应用中；必须保留这些候选，不能只返回某一个应用的结果。
 5. 如果 wiki 已经精确命中，直接基于 wiki 回答，不要再用分页 CLI 扫描找归属。
-6. 如果 wiki 查不到，再在 CLI 命令可用且网络 / API 可达时，用 `manage-tracking --json` 的只读命令兜底查询。
+6. 如果 wiki 查不到，再在 CLI 命令可用且网络 / API 可达时，用 `tracking-query --json` 的只读命令兜底查询。
 7. 如果用户明确要求实时复核，才补充 CLI 结果；若 CLI 与 wiki 不一致，同时说明实时结果和 wiki 快照差异，不要静默覆盖 wiki 结论。
 
 wiki 查不到时的只读兜底命令优先用精准查询：
 
 ```sh
-manage-tracking track search <keyword>
-manage-tracking --json track get-by-key --key <trackKey>
+tracking-query track search <keyword>
+tracking-query --json track get-by-key --key <trackKey>
 ```
 
 `app/page/section/element/track list` 都是分页列表，不作为确认某个自然语言候选的推荐命令；只有用户明确要求列列表，或已知 `--app-id`、`--page-id`、`--function-id` 等过滤条件时才使用。
@@ -191,8 +191,8 @@ references/tracking-wiki/
 - `create`、`delete` 有副作用，只在用户明确要求时执行
 - Python CLI 的主安装链路不再依赖 `skill-install.sh`
 - 如需确认实现细节，优先查看：
-  - `manage_tracking/cli.py`
-  - `manage_tracking/skillhub_entry.py`
-  - `manage_tracking/core/config.py`
-  - `manage_tracking/core/client.py`
-  - `manage_tracking/core/api.py`
+  - `tracking_query/cli.py`
+  - `tracking_query/skillhub_entry.py`
+  - `tracking_query/core/config.py`
+  - `tracking_query/core/client.py`
+  - `tracking_query/core/api.py`

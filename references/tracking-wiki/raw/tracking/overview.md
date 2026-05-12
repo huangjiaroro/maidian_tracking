@@ -1,4 +1,4 @@
-# ainvest manage_tracking Snapshot Overview
+# ainvest tracking_query Snapshot Overview
 
 - Environment: `ainvest`
 - Generated at: `2026-05-11T13:50:00+08:00`

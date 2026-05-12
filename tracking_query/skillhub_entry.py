@@ -4,7 +4,7 @@ from __future__ import annotations
 import sys
 
 
-SLUG = "manage-tracking"
+SLUG = "tracking-query"
 
 
 def main() -> None:

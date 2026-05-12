@@ -1,4 +1,4 @@
-"""Typed API wrapper for the manage-tracking CLI."""
+"""Typed API wrapper for the tracking-query CLI."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from .client import ApiClient, ApiError
 
 
 class ManageTrackingApi:
-    """API wrapper for manage-tracking endpoints."""
+    """API wrapper for tracking-query endpoints."""
 
     API_PREFIX = "maidian"
     PROXY_SUFFIX = "/maidian/server"

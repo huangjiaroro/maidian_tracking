@@ -1,13 +1,13 @@
-# manage-tracking 安装与配置引导
+# tracking-query 安装与配置引导
 
 ## 概览
 
-这份文档用于指导 `manage-tracking` 的首次初始化流程。
+这份文档用于指导 `tracking-query` 的首次初始化流程。
 
 推荐先直接执行：
 
 ```bash
-manage-tracking auth whoami
+tracking-query auth whoami
 ```
 
 这个命令最接近真实使用场景，能帮助判断：
@@ -19,7 +19,7 @@ manage-tracking auth whoami
 ## 第 1 步：先尝试 `auth whoami`
 
 ```bash
-manage-tracking auth whoami
+tracking-query auth whoami
 ```
 
 根据结果处理：
@@ -34,13 +34,13 @@ manage-tracking auth whoami
 
 ```bash
 bash ./skill-install.sh
-./.skillhub/bin/manage-tracking --help
+./.skillhub/bin/tracking-query --help
 ```
 
 安装后优先再次执行：
 
 ```bash
-./.skillhub/bin/manage-tracking auth whoami
+./.skillhub/bin/tracking-query auth whoami
 ```
 
 如果仍然是配置相关错误，再进入下一步。
@@ -69,7 +69,7 @@ bash ./skill-install.sh
 
 ```bash
 bash ./skill-install.sh
-./.skillhub/bin/manage-tracking --json config show
+./.skillhub/bin/tracking-query --json config show
 ```
 
 当前安装脚本会自动读取共享配置里的：
@@ -81,14 +81,14 @@ bash ./skill-install.sh
 
 当前代码只会根据共享配置里的 `skillhub_env` 自动选择地址；未配置或配置非法时默认使用 `prod`。技能本身不再保存私有环境配置，也不再提供技能私有配置的持久化命令。
 
-`registry`、`openclaw_skill_dir`、`ssl_legacy_mode` 等字段属于 SkillHub CLI 安装 / 平台配置，不参与 manage-tracking 运行时鉴权。当前 `config show` / `ping` 输出不包含 `environment`、`has_token`；如果出现这些字段，说明执行到旧版 CLI 或旧 wrapper。
+`registry`、`openclaw_skill_dir`、`ssl_legacy_mode` 等字段属于 SkillHub CLI 安装 / 平台配置，不参与 tracking-query 运行时鉴权。当前 `config show` / `ping` 输出不包含 `environment`、`has_token`；如果出现这些字段，说明执行到旧版 CLI 或旧 wrapper。
 
 ## 第 4 步：验证结果
 
 先执行：
 
 ```bash
-./.skillhub/bin/manage-tracking --json config show
+./.skillhub/bin/tracking-query --json config show
 ```
 
 至少确认：
@@ -100,7 +100,7 @@ bash ./skill-install.sh
 然后再次执行：
 
 ```bash
-./.skillhub/bin/manage-tracking auth whoami
+./.skillhub/bin/tracking-query auth whoami
 ```
 
 如果 `auth whoami` 成功返回用户信息，就可以认为安装和配置已经完成。

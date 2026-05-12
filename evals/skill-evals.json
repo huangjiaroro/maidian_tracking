@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "skill": "manage-tracking",
+  "skill": "tracking-query",
   "routing": [
     {
       "id": "positive-track-key-search",

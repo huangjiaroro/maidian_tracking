@@ -1,4 +1,4 @@
-"""Configuration helpers for the manage-tracking CLI."""
+"""Configuration helpers for the tracking-query CLI."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ import subprocess
 from dataclasses import dataclass
 from typing import Optional
 
-from manage_tracking.env import (
+from tracking_query.env import (
     read_shared_skillhub_config,
     read_skillhub_env,
     resolve_shared_skillhub_config_file,

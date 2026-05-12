@@ -127,15 +127,15 @@ LIMIT 1000;
 Agent 生成 SQL 后，将完整 SQL 作为参数传给 CLI：
 
 ```sh
-manage-tracking --json data explain --datasource-name presto-hive --sql "<SQL>"
-manage-tracking --json data preview --datasource-name presto-hive --sql "<SQL>"
-manage-tracking --json data download --datasource-name presto-hive --sql "<SQL>" --project-path .
+tracking-query --json data explain --datasource-name presto-hive --sql "<SQL>"
+tracking-query --json data preview --datasource-name presto-hive --sql "<SQL>"
+tracking-query --json data download --datasource-name presto-hive --sql "<SQL>" --project-path .
 ```
 
 也可以把 SQL 写入临时 `.sql` 文件后执行：
 
 ```sh
-manage-tracking --json data preview --datasource-name presto-hive --sql-file query.sql
+tracking-query --json data preview --datasource-name presto-hive --sql-file query.sql
 ```
 
 下载文件会保存到：

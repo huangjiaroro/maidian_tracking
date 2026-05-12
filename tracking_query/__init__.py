@@ -1,4 +1,4 @@
-"""manage-tracking Python CLI package."""
+"""tracking-query Python CLI package."""
 
 __all__ = ["__version__"]
 

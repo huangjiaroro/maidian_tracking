@@ -4,7 +4,7 @@
     {
       "args": ["--json", "ping"],
       "expect_exit_code": 0,
-      "expect_stdout_contains": ["\"status\": \"ok\"", "\"entrypoint\": \"manage-tracking\""]
+      "expect_stdout_contains": ["\"status\": \"ok\"", "\"entrypoint\": \"tracking-query\""]
     },
     {
       "args": ["--json", "config", "show"],

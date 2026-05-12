@@ -3,7 +3,7 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "manage-tracking"
+name = "tracking-query"
 version = "0.1.0"
 description = "CLI skill for managing tracking resources"
 readme = { file = "SKILL.md", content-type = "text/markdown" }
@@ -14,7 +14,7 @@ dependencies = [
 ]
 
 [project.scripts]
-manage-tracking = "manage_tracking.skillhub_entry:main"
+tracking-query = "tracking_query.skillhub_entry:main"
 
 [tool.setuptools.packages.find]
-include = ["manage_tracking*"]
+include = ["tracking_query*"]

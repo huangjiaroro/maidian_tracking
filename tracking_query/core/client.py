@@ -1,4 +1,4 @@
-"""HTTP client for the manage-tracking API."""
+"""HTTP client for the tracking-query API."""
 
 from __future__ import annotations
 
@@ -113,7 +113,7 @@ class ApiError(Exception):
 
 
 class ApiClient:
-    """HTTP client for manage-tracking API."""
+    """HTTP client for tracking-query API."""
 
     def __init__(self, config: CliConfig):
         self.config = config

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "[install] legacy compatibility path for manage-tracking"
+echo "[install] legacy compatibility path for tracking-query"
 echo "[install] prefer SkillHub CLI built-in Python installer for normal installs"
 
 RUNTIME_ROOT="./.skillhub/runtime"
@@ -20,14 +20,14 @@ if ! python3 -m pip install --no-build-isolation --target "${SITE_PACKAGES}" .; 
     python3 -m pip install --no-build-isolation --no-deps --target "${SITE_PACKAGES}" .
 fi
 
-cat > "${BIN_DIR}/manage-tracking" <<'EOF'
+cat > "${BIN_DIR}/tracking-query" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RUNTIME_DIR="${SCRIPT_DIR}/../runtime"
 export PYTHONPATH="${RUNTIME_DIR}/site-packages:${PYTHONPATH:-}"
-exec python3 -m manage_tracking.skillhub_entry "$@"
+exec python3 -m tracking_query.skillhub_entry "$@"
 EOF
 
-chmod +x "${BIN_DIR}/manage-tracking"
-"${BIN_DIR}/manage-tracking" --help >/dev/null
+chmod +x "${BIN_DIR}/tracking-query"
+"${BIN_DIR}/tracking-query" --help >/dev/null

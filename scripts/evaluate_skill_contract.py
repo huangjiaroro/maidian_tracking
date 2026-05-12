@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the manage-tracking skill contract and eval fixtures."""
+"""Validate the tracking-query skill contract and eval fixtures."""
 
 from __future__ import annotations
 
@@ -55,7 +55,7 @@ def main() -> int:
     frontmatter = parse_frontmatter(skill_md)
     description = frontmatter.get("description", "")
 
-    check(frontmatter.get("name") == "manage-tracking", "SKILL.md name must be manage-tracking.")
+    check(frontmatter.get("name") == "tracking-query", "SKILL.md name must be tracking-query.")
     check(len(description) <= 180, "description must stay concise; keep it at or below 180 characters.")
     check("明确提及" in description and "时触发" in description, "description must explain the explicit trigger condition.")
     check("用户行为埋点的定义" in description and "明细数据" in description, "description must cover tracking definitions and detail data.")
