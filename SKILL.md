@@ -1,7 +1,7 @@
 ---
 name: manage-tracking
-name_zh: 埋点管理
-description: 埋点管理与查询技能，用于查询埋点数据信息；当需要进行埋点信息查询、埋点 PV/UV/明细时使用；泛 BI 分析、原因诊断、归因、策略建议不触发。
+name_zh: 用户行为埋点查询
+description: 当明确提及需要查询用户行为埋点的定义，明细数据和统计数据(如埋点的UV，PV)时触发
 artifact_type: cli
 runtime: python
 python_version: 3.12.10

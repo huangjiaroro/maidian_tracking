@@ -57,9 +57,9 @@ def main() -> int:
 
     check(frontmatter.get("name") == "manage-tracking", "SKILL.md name must be manage-tracking.")
     check(len(description) <= 180, "description must stay concise; keep it at or below 180 characters.")
-    check("技能" in description and "用于" in description and "时使用" in description, "description must explain what the skill is and when to use it.")
-    check("埋点信息查询" in description and "埋点 PV/UV/明细" in description, "description must focus on tracking information and PV/UV/detail lookup.")
-    check("泛 BI" in description and "不触发" in description, "description must include the BI-analysis negative boundary.")
+    check("明确提及" in description and "时触发" in description, "description must explain the explicit trigger condition.")
+    check("用户行为埋点的定义" in description and "明细数据" in description, "description must cover tracking definitions and detail data.")
+    check("统计数据" in description and "UV" in description and "PV" in description, "description must cover PV/UV-style tracking stats.")
     check("## 技能作用与触发" not in skill_md, "Do not duplicate trigger guidance in the loaded body.")
     check("references/data-query.md" in skill_md, "SKILL.md must point data queries to references/data-query.md.")
     check("wiki 知识库优先" in skill_md and "wiki 查不到" in skill_md, "SKILL.md must enforce wiki-first lookup with CLI fallback only when wiki misses.")
