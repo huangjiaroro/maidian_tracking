@@ -16,8 +16,8 @@ from manage_tracking.env import (
 
 
 SKILLHUB_BASE_URLS = {
-    "office": "https://phonestat.hexin.cn/maidian/server",
-    "prod": "http://172.21.54.74:28000",
+    "office": "https://cbas-gateway.ainvest.com:1443/maidian/server",
+    "prod": "http://10.217.201.33:9854",
 }
 
 
@@ -65,7 +65,7 @@ def resolve_skillhub_base_url(skillhub_env: Optional[str] = None) -> str:
     """Resolve the management API base URL from SkillHub environment only."""
 
     env_name = (skillhub_env or read_skillhub_env()).strip().lower()
-    return SKILLHUB_BASE_URLS.get(env_name, SKILLHUB_BASE_URLS["office"]).rstrip("/")
+    return SKILLHUB_BASE_URLS.get(env_name, SKILLHUB_BASE_URLS["prod"]).rstrip("/")
 
 
 def load_runtime_config() -> RuntimeConfig:

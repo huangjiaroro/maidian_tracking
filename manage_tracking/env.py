@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import os
 from pathlib import Path
 from typing import Any
 
@@ -10,7 +9,7 @@ USER_SHARED_CONFIG_FILE = Path.home() / ".skillhub-cli" / "config.json"
 ROOT_SHARED_CONFIG_FILE = Path("/root/.skillhub-cli/config.json")
 SHARED_CONFIG_FILE = USER_SHARED_CONFIG_FILE
 VALID_SKILLHUB_ENVS = {"office", "prod"}
-DEFAULT_SKILLHUB_ENV = "office"
+DEFAULT_SKILLHUB_ENV = "prod"
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -36,10 +35,6 @@ def resolve_shared_skillhub_config_file() -> Path:
 
 
 def read_skillhub_env() -> str:
-    raw = os.getenv("SKILLHUB_ENV", "").strip().lower()
-    if raw in VALID_SKILLHUB_ENVS:
-        return raw
-
     config = read_shared_skillhub_config()
     raw = str(config.get("skillhub_env", "")).strip().lower()
     if raw in VALID_SKILLHUB_ENVS:

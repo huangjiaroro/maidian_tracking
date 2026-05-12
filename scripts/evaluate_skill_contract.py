@@ -56,16 +56,23 @@ def main() -> int:
     description = frontmatter.get("description", "")
 
     check(frontmatter.get("name") == "manage-tracking", "SKILL.md name must be manage-tracking.")
-    check(description.startswith("Load when "), "description must start with 'Load when '.")
     check(len(description) <= 180, "description must stay concise; keep it at or below 180 characters.")
-    check("泛 BI" in description and "除非明确需要埋点数据查询" in description, "description must include the BI-analysis negative boundary.")
+    check("技能" in description and "用于" in description and "时使用" in description, "description must explain what the skill is and when to use it.")
+    check("埋点信息查询" in description and "埋点 PV/UV/明细" in description, "description must focus on tracking information and PV/UV/detail lookup.")
+    check("泛 BI" in description and "不触发" in description, "description must include the BI-analysis negative boundary.")
     check("## 技能作用与触发" not in skill_md, "Do not duplicate trigger guidance in the loaded body.")
     check("references/data-query.md" in skill_md, "SKILL.md must point data queries to references/data-query.md.")
+    check("wiki 知识库优先" in skill_md and "wiki 查不到" in skill_md, "SKILL.md must enforce wiki-first lookup with CLI fallback only when wiki misses.")
+    check("list` 都是分页列表" in skill_md, "SKILL.md must warn that list commands are paginated and not preferred for candidate confirmation.")
     check("FROM hx_dwd.dwd_log_mob_unified_track_hs" not in skill_md, "Heavy SQL templates must not live in SKILL.md.")
 
     data_query = read_text("references/data-query.md")
     check("FROM hx_dwd.dwd_log_mob_unified_track_hs" in data_query, "data-query reference must contain SQL templates.")
     check("必须生成 `p_date` 分区条件" in data_query, "data-query reference must preserve the p_date gotcha.")
+
+    query_playbook = read_text("references/tracking-wiki/concepts/query-playbook.md")
+    check("wiki 知识库优先" in query_playbook and "不要分页扫描 CLI" in query_playbook, "query playbook must preserve wiki-first behavior and avoid CLI pagination when wiki hits.")
+    check("track search <keyword>" in query_playbook and "`list` 命令都是分页列表" in query_playbook, "query playbook must prefer precise CLI fallback over paginated list commands.")
 
     evals = json.loads(read_text("evals/skill-evals.json"))
     routing_cases = evals.get("routing", [])
@@ -81,10 +88,7 @@ def main() -> int:
     gitignore_lines = set(read_text(".gitignore").splitlines())
     ignored_reference_lines = {
         "references/",
-        "references/prod/",
-        "references/prod/tracking-wiki/",
-        "references/ainvest/",
-        "references/ainvest/tracking-wiki/",
+        "references/tracking-wiki/",
     }
     check(not (gitignore_lines & ignored_reference_lines), "Do not ignore bundled tracking wiki references.")
 

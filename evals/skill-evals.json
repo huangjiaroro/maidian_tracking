@@ -13,11 +13,11 @@
       "prompt": "AInvest 里 aime 无处不在按钮对应哪些埋点？不要漏掉其他应用候选",
       "expect_load": true,
       "expected_file_reads": [
-        "references/ainvest/tracking-wiki/index.md",
-        "references/ainvest/tracking-wiki/concepts/query-playbook.md",
-        "references/ainvest/tracking-wiki/entities/lookups/page-lookup.md",
-        "references/ainvest/tracking-wiki/entities/lookups/section-lookup.md",
-        "references/ainvest/tracking-wiki/entities/lookups/element-lookup.md"
+        "references/tracking-wiki/index.md",
+        "references/tracking-wiki/concepts/query-playbook.md",
+        "references/tracking-wiki/entities/lookups/page-lookup.md",
+        "references/tracking-wiki/entities/lookups/section-lookup.md",
+        "references/tracking-wiki/entities/lookups/element-lookup.md"
       ],
       "reason": "Natural-language tracking lookup requires the AInvest wiki and cross-app lookups."
     },
@@ -35,12 +35,25 @@
       "prompt": "查一下 AInvest 里 lhs_home_click 的前序和后序埋点关系",
       "expect_load": true,
       "expected_file_reads": [
-        "references/ainvest/tracking-wiki/index.md",
-        "references/ainvest/tracking-wiki/concepts/relation-model.md",
-        "references/ainvest/tracking-wiki/entities/relations/high-degree-tracks.md",
-        "references/ainvest/tracking-wiki/entities/relations/relation-components.md"
+        "references/tracking-wiki/index.md",
+        "references/tracking-wiki/concepts/relation-model.md",
+        "references/tracking-wiki/entities/relations/high-degree-tracks.md",
+        "references/tracking-wiki/entities/relations/relation-components.md"
       ],
       "reason": "AInvest relation questions use snapshot relation files."
+    },
+    {
+      "id": "positive-thinking-state-lookup",
+      "prompt": "思考状态切换的埋点是什么",
+      "expect_load": true,
+      "expected_file_reads": [
+        "references/tracking-wiki/index.md",
+        "references/tracking-wiki/concepts/query-playbook.md",
+        "references/tracking-wiki/entities/lookups/section-lookup.md",
+        "references/tracking-wiki/entities/lookups/element-lookup.md",
+        "references/tracking-wiki/entities/apps/app-12-lhsa.md"
+      ],
+      "reason": "Exact element/section lookup hits should be resolved from the app wiki file instead of CLI pagination."
     },
     {
       "id": "negative-generic-bi-analysis",
@@ -48,8 +61,7 @@
       "expect_load": false,
       "forbidden_file_reads": [
         "references/data-query.md",
-        "references/prod/tracking-wiki/index.md",
-        "references/ainvest/tracking-wiki/index.md"
+        "references/tracking-wiki/index.md"
       ],
       "reason": "Generic diagnosis and strategy advice should not trigger this skill without tracking-data lookup intent."
     },
@@ -63,26 +75,25 @@
   "progressive_loading": [
     {
       "id": "crud-no-wiki",
-      "prompt": "列出 prod 环境所有 app，并用 JSON 返回",
+      "prompt": "列出所有 app，并用 JSON 返回",
       "expected_file_reads": [],
       "forbidden_file_reads": [
         "references/data-query.md",
-        "references/prod/tracking-wiki/index.md",
-        "references/ainvest/tracking-wiki/index.md"
+        "references/tracking-wiki/index.md"
       ],
       "reason": "Simple CLI CRUD/list operations should not load heavyweight references."
     },
     {
-      "id": "prod-natural-language-lookup",
+      "id": "tracking-natural-language-lookup",
       "prompt": "同花顺手炒首页搜索按钮对应的埋点是什么？",
       "expected_file_reads": [
-        "references/prod/tracking-wiki/index.md",
-        "references/prod/tracking-wiki/concepts/query-playbook.md",
-        "references/prod/tracking-wiki/entities/lookups/page-lookup.md",
-        "references/prod/tracking-wiki/entities/lookups/section-lookup.md",
-        "references/prod/tracking-wiki/entities/lookups/element-lookup.md"
+        "references/tracking-wiki/index.md",
+        "references/tracking-wiki/concepts/query-playbook.md",
+        "references/tracking-wiki/entities/lookups/page-lookup.md",
+        "references/tracking-wiki/entities/lookups/section-lookup.md",
+        "references/tracking-wiki/entities/lookups/element-lookup.md"
       ],
-      "reason": "Natural-language lookup in prod requires the prod wiki indexes."
+      "reason": "Natural-language lookup requires the bundled tracking wiki indexes."
     }
   ]
 }

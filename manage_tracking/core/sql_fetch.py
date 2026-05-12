@@ -17,8 +17,8 @@ from cryptography.hazmat.primitives.serialization import Encoding, NoEncryption,
 
 
 DEFAULT_EASY_FETCH_BASE_URLS = {
-    "office": "https://phonestat.hexin.cn/sdmp/easyfetch",
-    "prod": "http://172.21.54.74:28000/sdmp/easyfetch",
+    "office": "https://cbas-gateway.ainvest.com:1443/sdmp/easyfetch",
+    "prod": "http://10.217.201.17:9596/easyfetch",
 }
 DEFAULT_TIMEOUT_SECONDS = 300
 
@@ -32,7 +32,7 @@ class SqlFetchConfig:
     """Runtime configuration for EasyFetch SQL calls."""
 
     base_url: str
-    skillhub_env: str = "office"
+    skillhub_env: str = "prod"
     cert_path: Optional[str] = None
     cert_password: Optional[str] = None
     email: Optional[str] = None
@@ -40,10 +40,10 @@ class SqlFetchConfig:
 
     @classmethod
     def from_runtime(cls, runtime: Any, timeout: int = DEFAULT_TIMEOUT_SECONDS) -> "SqlFetchConfig":
-        skillhub_env = str(getattr(runtime, "skillhub_env", "office")).strip().lower()
+        skillhub_env = str(getattr(runtime, "skillhub_env", "prod")).strip().lower()
         default_base_url = DEFAULT_EASY_FETCH_BASE_URLS.get(
             skillhub_env,
-            DEFAULT_EASY_FETCH_BASE_URLS["office"],
+            DEFAULT_EASY_FETCH_BASE_URLS["prod"],
         )
 
         return cls(

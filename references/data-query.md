@@ -147,8 +147,9 @@ data_file/intermediate/tracking_query_result_<timestamp>.csv
 EasyFetch 配置读取规则：
 
 - 只按 SkillHub 共享配置中的 `skillhub_env` 选择默认地址
-- `office` 使用 `https://phonestat.hexin.cn/sdmp/easyfetch`
-- `prod` 使用 `http://172.21.54.74:28000/sdmp/easyfetch`
+- 未配置或配置非法时默认使用 `prod`
+- `office` 使用 `https://cbas-gateway.ainvest.com:1443/sdmp/easyfetch`
+- `prod` 使用 `http://10.217.201.17:9596/easyfetch`
 - `starrocks` 会映射为 `starrocks-claude`；固定埋点明细表是 Hive 表，默认使用 `presto-hive`
 - 邮箱读取 SkillHub 共享配置中的 `user_email`
 - 证书读取 SkillHub 共享配置中的 `ssl_cert_file` / `ssl_cert_password`

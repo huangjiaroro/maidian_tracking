@@ -52,11 +52,13 @@ bash ./skill-install.sh
 优先准备：
 
 - 配置文件路径：优先 `$HOME/.skillhub-cli/config.json`；如果不存在，再读取 `/root/.skillhub-cli/config.json`
+- 不读取 `$HOME/.skillhub/config.json` 或 `/root/.skillhub/config.json`
 
 示例：
 
 ```json
 {
+  "skillhub_env": "prod",
   "ssl_cert_file": "/path/to/client_cert.p12",
   "ssl_cert_password": "YOUR_CERT_PASSWORD",
   "user_email": "your_email@example.com"
@@ -77,7 +79,9 @@ bash ./skill-install.sh
 - `ssl_cert_password`
 - `user_email`
 
-当前代码会根据 `skillhub_env` 自动选择地址。技能本身不再保存私有环境配置，不再提供 `config set-env`、`config set-url`、`config set-cert` 等持久化命令。
+当前代码只会根据共享配置里的 `skillhub_env` 自动选择地址；未配置或配置非法时默认使用 `prod`。技能本身不再保存私有环境配置，也不再提供技能私有配置的持久化命令。
+
+`registry`、`openclaw_skill_dir`、`ssl_legacy_mode` 等字段属于 SkillHub CLI 安装 / 平台配置，不参与 manage-tracking 运行时鉴权。当前 `config show` / `ping` 输出不包含 `environment`、`has_token`；如果出现这些字段，说明执行到旧版 CLI 或旧 wrapper。
 
 ## 第 4 步：验证结果
 
