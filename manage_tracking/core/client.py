@@ -118,7 +118,6 @@ class ApiClient:
     def __init__(self, config: CliConfig):
         self.config = config
         self.base_url = config.base_url.rstrip("/")
-        self.session = None
 
     def _build_url(self, path: str) -> str:
         if path.startswith("http"):
@@ -131,11 +130,8 @@ class ApiClient:
             "Content-Type": "application/json",
         }
 
-        if self.config.token:
-            headers["Authorization"] = f"Bearer {self.config.token}"
-
-        if self.session and self.session.email:
-            headers["cbas_email"] = self.session.email
+        if self.config.email:
+            headers["cbas_email"] = self.config.email
 
         if extra_headers:
             headers.update(extra_headers)

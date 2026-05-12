@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import json
-import os
 import sys
 from typing import Any, Optional
 
@@ -12,8 +11,7 @@ import click
 
 from .core.api import ManageTrackingApi
 from .core.client import ApiClient, ApiError
-from .core.config import CliConfig, resolve_base_url, resolve_cert
-from .core.session import Session, create_session
+from .core.config import CliConfig, RuntimeConfig, load_runtime_config
 from .core.sql_fetch import (
     SqlFetchConfig,
     download_sql_result,
@@ -21,19 +19,10 @@ from .core.sql_fetch import (
     get_catalog_name,
     preview_sql_result,
 )
-from .env import read_skillhub_env
 
 
-_session: Optional[Session] = None
 _api: Optional[ManageTrackingApi] = None
 _json_output = False
-
-
-def get_session() -> Session:
-    global _session
-    if _session is None:
-        _session = create_session()
-    return _session
 
 
 def output(result: Any, json_only: bool = False) -> None:
@@ -84,98 +73,43 @@ def read_sql_input(sql: Optional[str], sql_file: Optional[str]) -> str:
 def make_sql_fetch_config(
     ctx: click.Context,
     *,
-    easy_fetch_url: Optional[str],
-    cbas_email: Optional[str],
-    sql_env: Optional[str],
-    cert_path: Optional[str],
-    cert_password: Optional[str],
     timeout: int,
 ) -> SqlFetchConfig:
-    session: Session = ctx.obj["session"]
-    explicit_env = ctx.obj.get("explicit_env")
-    return SqlFetchConfig.from_values(
-        base_url=easy_fetch_url,
-        environment=sql_env or explicit_env,
-        cert_path=cert_path,
-        cert_password=cert_password,
-        email=cbas_email,
-        session=session,
-        timeout=timeout,
-    )
+    runtime: RuntimeConfig = ctx.obj["runtime"]
+    return SqlFetchConfig.from_runtime(runtime, timeout=timeout)
 
 
 @click.group()
-@click.option("--url", help="Base URL for the API")
-@click.option("--cert-path", help="Path to P12 certificate file")
-@click.option("--cert-password", help="P12 certificate password")
-@click.option("--token", help="Auth token")
-@click.option(
-    "--env",
-    type=click.Choice(["dev", "test", "prod", "dreamface", "ainvest"]),
-    help="Environment name",
-)
 @click.option("--json", "json_output", is_flag=True, help="Output as JSON")
 @click.option("--debug", is_flag=True, help="Enable debug mode")
 @click.pass_context
 def cli(
     ctx: click.Context,
-    url: Optional[str],
-    cert_path: Optional[str],
-    cert_password: Optional[str],
-    token: Optional[str],
-    env: Optional[str],
     json_output: bool,
     debug: bool,
 ) -> None:
     """manage-tracking - CLI for tracking point management."""
 
-    global _json_output, _api, _session
+    global _json_output, _api
 
     _json_output = json_output
-    _session = None
     _api = None
-
-    session = get_session()
-
-    if env:
-        session.set_environment(env)
-
-    resolved_url = resolve_base_url(url, env, session.config)
-    if resolved_url and resolved_url != session.base_url:
-        session.set_base_url(resolved_url)
-
-    resolved_cert_path, resolved_cert_password = resolve_cert(
-        cert_path,
-        cert_password,
-        session.config,
-    )
-    if resolved_cert_path and resolved_cert_password:
-        session.set_cert(resolved_cert_path, resolved_cert_password)
-
-    resolved_token = token or os.environ.get("MANAGE_TRACKING_TOKEN") or session.token
-    if resolved_token:
-        session.set_token(resolved_token)
-
-    resolved_email = os.environ.get("MANAGE_TRACKING_EMAIL") or session.email
-    if resolved_email:
-        session.set_email(resolved_email)
+    runtime = load_runtime_config()
 
     config = CliConfig(
-        base_url=session.base_url,
-        cert_path=session.cert_path,
-        cert_password=session.cert_password,
-        token=session.token,
+        base_url=runtime.base_url,
+        cert_path=runtime.cert_path,
+        cert_password=runtime.cert_password,
+        email=runtime.email,
         json_output=json_output,
         debug=debug,
     )
     client = ApiClient(config)
-    client.session = session.config
     _api = ManageTrackingApi(client)
 
     ctx.ensure_object(dict)
-    ctx.obj["session"] = session
+    ctx.obj["runtime"] = runtime
     ctx.obj["api"] = _api
-    ctx.obj["explicit_env"] = env.lower() if env else None
 
 
 @cli.command("ping")
@@ -183,16 +117,12 @@ def cli(
 def ping(ctx: click.Context) -> None:
     """Return a local health payload without calling the API."""
 
-    session: Session = ctx.obj["session"]
+    runtime: RuntimeConfig = ctx.obj["runtime"]
     output(
         {
             "status": "ok",
             "entrypoint": "manage-tracking",
-            "skillhub_env": read_skillhub_env(),
-            "environment": session.environment,
-            "base_url": session.base_url,
-            "has_cert": session.cert_path is not None,
-            "has_token": session.token is not None,
+            **runtime.status(),
         }
     )
 
@@ -562,11 +492,6 @@ def data_group() -> None:
     default="presto-hive",
     show_default=True,
 )
-@click.option("--easy-fetch-url", help="EasyFetch base URL")
-@click.option("--cbas-email", help="CBAS_EMAIL request header")
-@click.option("--sql-env", help="THS_TIER-style SQL environment for catalog mapping")
-@click.option("--cert-path", help="Certificate path for HTTPS mTLS")
-@click.option("--cert-password", help="Certificate password")
 @click.option("--timeout", default=300, show_default=True, help="Request timeout in seconds")
 @click.pass_context
 def data_preview(
@@ -574,11 +499,6 @@ def data_preview(
     sql: Optional[str],
     sql_file: Optional[str],
     datasource_name: str,
-    easy_fetch_url: Optional[str],
-    cbas_email: Optional[str],
-    sql_env: Optional[str],
-    cert_path: Optional[str],
-    cert_password: Optional[str],
     timeout: int,
 ) -> None:
     """Preview SQL result through EasyFetch."""
@@ -586,11 +506,6 @@ def data_preview(
     query_sql = read_sql_input(sql, sql_file)
     config = make_sql_fetch_config(
         ctx,
-        easy_fetch_url=easy_fetch_url,
-        cbas_email=cbas_email,
-        sql_env=sql_env,
-        cert_path=cert_path,
-        cert_password=cert_password,
         timeout=timeout,
     )
     output(preview_sql_result(query_sql, datasource_name, config))
@@ -606,11 +521,6 @@ def data_preview(
     show_default=True,
 )
 @click.option("--project-path", default=".", show_default=True, help="Project root for data_file/intermediate output")
-@click.option("--easy-fetch-url", help="EasyFetch base URL")
-@click.option("--cbas-email", help="CBAS_EMAIL request header")
-@click.option("--sql-env", help="THS_TIER-style SQL environment for catalog mapping")
-@click.option("--cert-path", help="Certificate path for HTTPS mTLS")
-@click.option("--cert-password", help="Certificate password")
 @click.option("--timeout", default=300, show_default=True, help="Request timeout in seconds")
 @click.pass_context
 def data_download(
@@ -619,11 +529,6 @@ def data_download(
     sql_file: Optional[str],
     datasource_name: str,
     project_path: str,
-    easy_fetch_url: Optional[str],
-    cbas_email: Optional[str],
-    sql_env: Optional[str],
-    cert_path: Optional[str],
-    cert_password: Optional[str],
     timeout: int,
 ) -> None:
     """Download full SQL result to data_file/intermediate as CSV."""
@@ -631,11 +536,6 @@ def data_download(
     query_sql = read_sql_input(sql, sql_file)
     config = make_sql_fetch_config(
         ctx,
-        easy_fetch_url=easy_fetch_url,
-        cbas_email=cbas_email,
-        sql_env=sql_env,
-        cert_path=cert_path,
-        cert_password=cert_password,
         timeout=timeout,
     )
     output(download_sql_result(query_sql, datasource_name, project_path, config))
@@ -650,11 +550,6 @@ def data_download(
     default="presto-hive",
     show_default=True,
 )
-@click.option("--easy-fetch-url", help="EasyFetch base URL")
-@click.option("--cbas-email", help="CBAS_EMAIL request header")
-@click.option("--sql-env", help="THS_TIER-style SQL environment for catalog mapping")
-@click.option("--cert-path", help="Certificate path for HTTPS mTLS")
-@click.option("--cert-password", help="Certificate password")
 @click.option("--timeout", default=300, show_default=True, help="Request timeout in seconds")
 @click.pass_context
 def data_explain(
@@ -662,11 +557,6 @@ def data_explain(
     sql: Optional[str],
     sql_file: Optional[str],
     datasource_name: str,
-    easy_fetch_url: Optional[str],
-    cbas_email: Optional[str],
-    sql_env: Optional[str],
-    cert_path: Optional[str],
-    cert_password: Optional[str],
     timeout: int,
 ) -> None:
     """Explain SQL through EasyFetch."""
@@ -674,51 +564,31 @@ def data_explain(
     query_sql = read_sql_input(sql, sql_file)
     config = make_sql_fetch_config(
         ctx,
-        easy_fetch_url=easy_fetch_url,
-        cbas_email=cbas_email,
-        sql_env=sql_env,
-        cert_path=cert_path,
-        cert_password=cert_password,
         timeout=timeout,
     )
     output(explain_sql(query_sql, datasource_name, config))
 
 
 @data_group.command("config")
-@click.option("--easy-fetch-url", help="EasyFetch base URL")
-@click.option("--cbas-email", help="CBAS_EMAIL request header")
-@click.option("--sql-env", help="THS_TIER-style SQL environment for catalog mapping")
-@click.option("--cert-path", help="Certificate path for HTTPS mTLS")
-@click.option("--cert-password", help="Certificate password")
 @click.option("--timeout", default=300, show_default=True, help="Request timeout in seconds")
 @click.pass_context
 def data_config(
     ctx: click.Context,
-    easy_fetch_url: Optional[str],
-    cbas_email: Optional[str],
-    sql_env: Optional[str],
-    cert_path: Optional[str],
-    cert_password: Optional[str],
     timeout: int,
 ) -> None:
     """Show SQL execution configuration without secrets."""
 
     config = make_sql_fetch_config(
         ctx,
-        easy_fetch_url=easy_fetch_url,
-        cbas_email=cbas_email,
-        sql_env=sql_env,
-        cert_path=cert_path,
-        cert_password=cert_password,
         timeout=timeout,
     )
     output(
         {
             "easy_fetch_base_url": config.base_url,
-            "sql_environment": config.environment,
-            "has_cert": bool(config.cert_path),
+            "skillhub_env": config.skillhub_env,
+            "has_cert": bool(config.cert_path and config.cert_password),
             "email": config.email,
-            "starrocks_catalog": get_catalog_name("starrocks", config.environment),
+            "starrocks_catalog": get_catalog_name("starrocks", config.skillhub_env),
             "timeout": config.timeout,
         }
     )
@@ -732,56 +602,8 @@ def config_group() -> None:
 @config_group.command("show")
 @click.pass_context
 def config_show(ctx: click.Context) -> None:
-    session: Session = ctx.obj["session"]
-    output(session.status())
-
-
-@config_group.command("set-url")
-@click.argument("url")
-@click.pass_context
-def config_set_url(ctx: click.Context, url: str) -> None:
-    session: Session = ctx.obj["session"]
-    session.set_base_url(url)
-    session.save()
-    output({"message": f"URL set to {url}"})
-
-
-@config_group.command("set-env")
-@click.argument("env", type=click.Choice(["dev", "test", "prod", "dreamface", "ainvest"]))
-@click.pass_context
-def config_set_env(ctx: click.Context, env: str) -> None:
-    session: Session = ctx.obj["session"]
-    session.set_environment(env)
-    session.save()
-    output({"message": f"Environment set to {env}", "url": session.base_url})
-
-
-@config_group.command("set-cert")
-@click.argument("cert_path")
-@click.argument("cert_password")
-@click.pass_context
-def config_set_cert(ctx: click.Context, cert_path: str, cert_password: str) -> None:
-    session: Session = ctx.obj["session"]
-    session.set_cert(cert_path, cert_password)
-    session.save()
-    output({"message": "Certificate configured"})
-
-
-@config_group.command("clear-cert")
-@click.pass_context
-def config_clear_cert(ctx: click.Context) -> None:
-    session: Session = ctx.obj["session"]
-    session.clear_cert()
-    session.save()
-    output({"message": "Certificate cleared"})
-
-
-@config_group.command("reset")
-@click.pass_context
-def config_reset(ctx: click.Context) -> None:
-    session: Session = ctx.obj["session"]
-    session.reset()
-    output({"message": "Configuration reset to defaults"})
+    runtime: RuntimeConfig = ctx.obj["runtime"]
+    output(runtime.status())
 
 
 @cli.command("repl")
@@ -792,10 +614,10 @@ def repl(ctx: click.Context) -> None:
     import code
 
     api: ManageTrackingApi = ctx.obj["api"]
-    session: Session = ctx.obj["session"]
+    runtime: RuntimeConfig = ctx.obj["runtime"]
     console_locals = {
         "api": api,
-        "session": session,
+        "runtime": runtime,
         "output": output,
         "json": lambda value: print(json.dumps(value, indent=2)),
     }
@@ -803,7 +625,7 @@ def repl(ctx: click.Context) -> None:
 manage-tracking REPL
 Available objects:
   api     - ManageTrackingApi instance
-  session - Session instance
+  runtime - RuntimeConfig instance
   output  - Print formatted output
   json    - Print as JSON
 """

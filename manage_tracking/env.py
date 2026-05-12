@@ -6,7 +6,9 @@ from pathlib import Path
 from typing import Any
 
 
-SHARED_CONFIG_FILE = Path.home() / ".skillhub-cli" / "config.json"
+USER_SHARED_CONFIG_FILE = Path.home() / ".skillhub-cli" / "config.json"
+ROOT_SHARED_CONFIG_FILE = Path("/root/.skillhub-cli/config.json")
+SHARED_CONFIG_FILE = USER_SHARED_CONFIG_FILE
 VALID_SKILLHUB_ENVS = {"office", "prod"}
 DEFAULT_SKILLHUB_ENV = "office"
 
@@ -22,7 +24,15 @@ def load_json(path: Path) -> dict[str, Any]:
 
 
 def read_shared_skillhub_config() -> dict[str, Any]:
-    return load_json(SHARED_CONFIG_FILE)
+    return load_json(resolve_shared_skillhub_config_file())
+
+
+def resolve_shared_skillhub_config_file() -> Path:
+    if USER_SHARED_CONFIG_FILE.exists():
+        return USER_SHARED_CONFIG_FILE
+    if ROOT_SHARED_CONFIG_FILE.exists():
+        return ROOT_SHARED_CONFIG_FILE
+    return USER_SHARED_CONFIG_FILE
 
 
 def read_skillhub_env() -> str:
@@ -36,7 +46,3 @@ def read_skillhub_env() -> str:
         return raw
 
     return DEFAULT_SKILLHUB_ENV
-
-
-def default_manage_tracking_environment() -> str:
-    return "prod" if read_skillhub_env() == "prod" else "dev"

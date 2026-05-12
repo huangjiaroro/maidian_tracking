@@ -1,0 +1,209 @@
+{
+  "environment": "ainvest",
+  "generated_at": "2026-05-11T13:50:00+08:00",
+  "source_directory": "/Users/zyhjr/Downloads",
+  "primary_files": {
+    "apps": "app_info.csv",
+    "pages": "page_info.csv",
+    "sections": "qk1.csv",
+    "elements": "ys1.csv",
+    "tracks": "track_info.csv",
+    "relations": "track_info_realtion.csv"
+  },
+  "source_files": {
+    "apps": [
+      {
+        "file": "app_info.csv",
+        "path": "/Users/zyhjr/Downloads/app_info.csv",
+        "exists": true,
+        "size_bytes": 3748,
+        "sha256": "8baa6fc08bba0db68c1e97da52e27caef051cec7a24fabbd94cb0ef6f26f2184",
+        "rows": 23,
+        "columns": [
+          "id",
+          "app_code",
+          "app_name",
+          "app_platform",
+          "app_system",
+          "app_sign",
+          "creator",
+          "create_time",
+          "status",
+          "app_key",
+          "batch_size",
+          "buffer_second",
+          "batch_submit_count",
+          "batch_submit_time",
+          "topic_name",
+          "payload_status",
+          "table_name"
+        ]
+      }
+    ],
+    "pages": [
+      {
+        "file": "page_info.csv",
+        "path": "/Users/zyhjr/Downloads/page_info.csv",
+        "exists": true,
+        "size_bytes": 714880,
+        "sha256": "5f3c800bc09268734b8b6fd72b6163814702492554714411ee3e7544c990c148",
+        "rows": 1279,
+        "columns": [
+          "id",
+          "page_short",
+          "page_name",
+          "pictures",
+          "app_id"
+        ]
+      },
+      {
+        "file": "page_info1.csv",
+        "path": "/Users/zyhjr/Downloads/page_info1.csv",
+        "exists": false
+      },
+      {
+        "file": "page_info2.csv",
+        "path": "/Users/zyhjr/Downloads/page_info2.csv",
+        "exists": true,
+        "size_bytes": 714880,
+        "sha256": "5f3c800bc09268734b8b6fd72b6163814702492554714411ee3e7544c990c148",
+        "rows": 1279,
+        "columns": [
+          "id",
+          "page_short",
+          "page_name",
+          "pictures",
+          "app_id"
+        ]
+      }
+    ],
+    "sections": [
+      {
+        "file": "qk1.csv",
+        "path": "/Users/zyhjr/Downloads/qk1.csv",
+        "exists": true,
+        "size_bytes": 50223,
+        "sha256": "d026bf7b7ee2d3c601503563da7338eef2b583ce57cd4954d7cefc902730ea65",
+        "rows": 1690,
+        "columns": [
+          "id",
+          "function_code",
+          "function_name"
+        ]
+      },
+      {
+        "file": "qk2.csv",
+        "path": "/Users/zyhjr/Downloads/qk2.csv",
+        "exists": true,
+        "size_bytes": 50223,
+        "sha256": "d026bf7b7ee2d3c601503563da7338eef2b583ce57cd4954d7cefc902730ea65",
+        "rows": 1690,
+        "columns": [
+          "id",
+          "function_code",
+          "function_name"
+        ]
+      }
+    ],
+    "elements": [
+      {
+        "file": "ys1.csv",
+        "path": "/Users/zyhjr/Downloads/ys1.csv",
+        "exists": true,
+        "size_bytes": 81544,
+        "sha256": "bbed28e8686a32f1f6d955b5d51ea70aa30d7e28fcfcc324b67c75ee76a1ed1f",
+        "rows": 2801,
+        "columns": [
+          "id",
+          "control_code",
+          "control_name"
+        ]
+      },
+      {
+        "file": "ys2.csv",
+        "path": "/Users/zyhjr/Downloads/ys2.csv",
+        "exists": true,
+        "size_bytes": 81544,
+        "sha256": "bbed28e8686a32f1f6d955b5d51ea70aa30d7e28fcfcc324b67c75ee76a1ed1f",
+        "rows": 2801,
+        "columns": [
+          "id",
+          "control_code",
+          "control_name"
+        ]
+      },
+      {
+        "file": "ys3.csv",
+        "path": "/Users/zyhjr/Downloads/ys3.csv",
+        "exists": true,
+        "size_bytes": 81544,
+        "sha256": "bbed28e8686a32f1f6d955b5d51ea70aa30d7e28fcfcc324b67c75ee76a1ed1f",
+        "rows": 2801,
+        "columns": [
+          "id",
+          "control_code",
+          "control_name"
+        ]
+      }
+    ],
+    "tracks": [
+      {
+        "file": "track_info.csv",
+        "path": "/Users/zyhjr/Downloads/track_info.csv",
+        "exists": true,
+        "size_bytes": 6038785,
+        "sha256": "91b462e8b039d4af9e13aa231efdb250b9bafd0d5775829c94a3b6f2fa88669c",
+        "rows": 13500,
+        "columns": [
+          "id",
+          "track_key",
+          "track_name",
+          "action_fields",
+          "app_id",
+          "page_id",
+          "control_id",
+          "function_id",
+          "business_line",
+          "allow_action"
+        ]
+      }
+    ],
+    "relations": [
+      {
+        "file": "track_info_realtion.csv",
+        "path": "/Users/zyhjr/Downloads/track_info_realtion.csv",
+        "exists": true,
+        "size_bytes": 2215288,
+        "sha256": "96133fb9fb1a099246ce7cb0d17a8d0a5636602ed663e3a5383a77c9a9192a2c",
+        "rows": 29301,
+        "columns": [
+          "stat_id",
+          "from_stat_id"
+        ]
+      }
+    ]
+  },
+  "counts": {
+    "apps": 23,
+    "pages": 1279,
+    "sections": 1690,
+    "elements": 2801,
+    "tracks": 13500,
+    "relations": 29301,
+    "relation_non_self_rows": 27878,
+    "relation_unique_non_self_edges": 27878,
+    "relation_self_loops": 1423,
+    "relation_tracks_covered": 4096
+  },
+  "quality": {
+    "missing_app_pages": 1,
+    "missing_track_apps": 0,
+    "missing_track_pages": 0,
+    "missing_track_sections": 0,
+    "missing_track_elements": 0,
+    "duplicate_track_keys": 2,
+    "duplicate_section_codes": 2,
+    "duplicate_element_codes": 5,
+    "duplicate_page_shorts": 209
+  }
+}

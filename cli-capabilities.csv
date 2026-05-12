@@ -1,7 +1,7 @@
 category,capabilities
-认证与环境,"读取 SkillHub 共享证书配置、识别 skillhub_env、切换 dev/test/prod/dreamface/ainvest 环境、查看当前配置"
+认证与环境,"读取 SkillHub 共享配置、识别 skillhub_env、按技能广场环境自动选择地址、查看当前配置"
 对象查询,"列出和获取 app、page、section、element、track，按 track key 搜索埋点"
 对象维护,"创建和删除 app、page、section、element、track"
 埋点数据查询,"执行 agent 生成的埋点 SQL，通过 EasyFetch explain、preview 或下载结果 CSV；只查埋点数据，不做趋势归因、异常诊断或业务分析"
 健康检查,"支持 ping 和离线 smoke test，快速验证 CLI 入口与本地配置"
-自动化,"支持 --json 输出、REPL 探索、保存 skill 私有会话"
+自动化,"支持 --json 输出、REPL 探索；运行配置无状态读取 SkillHub 共享配置"

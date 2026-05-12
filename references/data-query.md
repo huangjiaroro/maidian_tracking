@@ -144,11 +144,11 @@ manage-tracking --json data preview --datasource-name presto-hive --sql-file que
 data_file/intermediate/tracking_query_result_<timestamp>.csv
 ```
 
-EasyFetch 配置读取顺序：
+EasyFetch 配置读取规则：
 
-- `--easy-fetch-url`，或 `MANAGE_TRACKING_EASY_FETCH_BASE_URL` / `EASY_FETCH_BASE_URL`
-- 若未显式传 EasyFetch URL，会按 SQL 环境选择默认地址：`ainvest` 使用 `https://cbas-gateway.ainvest.com:1443/sdmp/easyfetch`，`prod` / `dev` / `test` / `dreamface` 使用 `https://phonestat.hexin.cn/sdmp/easyfetch`
-- SQL 环境读取顺序：`--sql-env` > 顶层 `--env` > `THS_TIER` > 当前 session 环境
-- SQL 环境也用于将 `starrocks` 映射为 `starrocks-claude`；固定埋点明细表是 Hive 表，默认使用 `presto-hive`
-- `CBAS_EMAIL` / `MANAGE_TRACKING_EMAIL` / SkillHub 共享配置中的 `user_email`
-- `SSL_CERT_FILE` / `SSL_CERT_PASSWORD` 或 SkillHub 共享证书配置
+- 只按 SkillHub 共享配置中的 `skillhub_env` 选择默认地址
+- `office` 使用 `https://phonestat.hexin.cn/sdmp/easyfetch`
+- `prod` 使用 `http://172.21.54.74:28000/sdmp/easyfetch`
+- `starrocks` 会映射为 `starrocks-claude`；固定埋点明细表是 Hive 表，默认使用 `presto-hive`
+- 邮箱读取 SkillHub 共享配置中的 `user_email`
+- 证书读取 SkillHub 共享配置中的 `ssl_cert_file` / `ssl_cert_password`

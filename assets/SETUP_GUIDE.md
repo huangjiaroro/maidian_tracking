@@ -51,7 +51,7 @@ bash ./skill-install.sh
 
 优先准备：
 
-- 配置文件路径：`$HOME/.skillhub-cli/config.json`
+- 配置文件路径：优先 `$HOME/.skillhub-cli/config.json`；如果不存在，再读取 `/root/.skillhub-cli/config.json`
 
 示例：
 
@@ -72,36 +72,12 @@ bash ./skill-install.sh
 
 当前安装脚本会自动读取共享配置里的：
 
+- `skillhub_env`
 - `ssl_cert_file`
 - `ssl_cert_password`
 - `user_email`
 
-如果你需要按 SkillHub 环境区分地址，还可以在 skill 私有配置里增加：
-
-```json
-{
-  "office_base_url": "https://office.example.internal/maidian/server",
-  "prod_base_url": "https://prod.example.internal/maidian/server"
-}
-```
-
-当前代码会根据 `skillhub_env` 自动选择对应地址。
-
-### 手动配置兜底方案
-
-如果共享配置不存在，也可以手动执行：
-
-```bash
-./.skillhub/bin/manage-tracking config set-env prod
-./.skillhub/bin/manage-tracking config set-cert /path/to/client_cert.p12 YOUR_CERT_PASSWORD
-./.skillhub/bin/manage-tracking --json config show
-```
-
-如需自定义地址：
-
-```bash
-./.skillhub/bin/manage-tracking config set-url https://phonestat.hexin.cn/maidian/server
-```
+当前代码会根据 `skillhub_env` 自动选择地址。技能本身不再保存私有环境配置，不再提供 `config set-env`、`config set-url`、`config set-cert` 等持久化命令。
 
 ## 第 4 步：验证结果
 

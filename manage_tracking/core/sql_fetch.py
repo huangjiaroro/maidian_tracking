@@ -17,11 +17,8 @@ from cryptography.hazmat.primitives.serialization import Encoding, NoEncryption,
 
 
 DEFAULT_EASY_FETCH_BASE_URLS = {
-    "dev": "https://phonestat.hexin.cn/sdmp/easyfetch",
-    "test": "https://phonestat.hexin.cn/sdmp/easyfetch",
-    "prod": "https://phonestat.hexin.cn/sdmp/easyfetch",
-    "dreamface": "https://phonestat.hexin.cn/sdmp/easyfetch",
-    "ainvest": "https://cbas-gateway.ainvest.com:1443/sdmp/easyfetch",
+    "office": "https://phonestat.hexin.cn/sdmp/easyfetch",
+    "prod": "http://172.21.54.74:28000/sdmp/easyfetch",
 }
 DEFAULT_TIMEOUT_SECONDS = 300
 
@@ -35,51 +32,26 @@ class SqlFetchConfig:
     """Runtime configuration for EasyFetch SQL calls."""
 
     base_url: str
-    environment: str = "dev"
+    skillhub_env: str = "office"
     cert_path: Optional[str] = None
     cert_password: Optional[str] = None
     email: Optional[str] = None
     timeout: int = DEFAULT_TIMEOUT_SECONDS
 
     @classmethod
-    def from_values(
-        cls,
-        *,
-        base_url: Optional[str] = None,
-        environment: Optional[str] = None,
-        cert_path: Optional[str] = None,
-        cert_password: Optional[str] = None,
-        email: Optional[str] = None,
-        session: Any = None,
-        timeout: int = DEFAULT_TIMEOUT_SECONDS,
-    ) -> "SqlFetchConfig":
-        session_config = getattr(session, "config", None)
-        session_cert_path = getattr(session_config, "cert_path", None)
-        session_cert_password = getattr(session_config, "cert_password", None)
-        session_email = getattr(session_config, "email", None)
-        session_environment = getattr(session_config, "environment", None)
-        resolved_environment = (environment or os.getenv("THS_TIER") or session_environment or "dev").lower()
+    def from_runtime(cls, runtime: Any, timeout: int = DEFAULT_TIMEOUT_SECONDS) -> "SqlFetchConfig":
+        skillhub_env = str(getattr(runtime, "skillhub_env", "office")).strip().lower()
         default_base_url = DEFAULT_EASY_FETCH_BASE_URLS.get(
-            resolved_environment,
-            DEFAULT_EASY_FETCH_BASE_URLS["prod"],
+            skillhub_env,
+            DEFAULT_EASY_FETCH_BASE_URLS["office"],
         )
 
         return cls(
-            base_url=(
-                base_url
-                or os.getenv("MANAGE_TRACKING_EASY_FETCH_BASE_URL")
-                or os.getenv("EASY_FETCH_BASE_URL")
-                or default_base_url
-            ).rstrip("/"),
-            environment=resolved_environment,
-            cert_path=cert_path or os.getenv("SSL_CERT_FILE") or os.getenv("MANAGE_TRACKING_CERT_PATH") or session_cert_path,
-            cert_password=(
-                cert_password
-                or os.getenv("SSL_CERT_PASSWORD")
-                or os.getenv("MANAGE_TRACKING_CERT_PASSWORD")
-                or session_cert_password
-            ),
-            email=email or os.getenv("CBAS_EMAIL") or os.getenv("MANAGE_TRACKING_EMAIL") or session_email,
+            base_url=default_base_url.rstrip("/"),
+            skillhub_env=skillhub_env,
+            cert_path=getattr(runtime, "cert_path", None),
+            cert_password=getattr(runtime, "cert_password", None),
+            email=getattr(runtime, "email", None),
             timeout=timeout,
         )
 
@@ -90,10 +62,10 @@ def sanitize_sql(sql: str) -> str:
     return sql.replace("\\'", "'").replace('\\"', '"').strip()
 
 
-def get_catalog_name(catalog_name: str, environment: str) -> str:
+def get_catalog_name(catalog_name: str, skillhub_env: str) -> str:
     """Match the catalog aliasing used by the source Claudable tools."""
 
-    if catalog_name == "starrocks" and environment in {"prod", "dev"}:
+    if catalog_name == "starrocks" and skillhub_env in {"office", "prod"}:
         return "starrocks-claude"
     return catalog_name
 
@@ -272,7 +244,7 @@ def _parse_response(status: int, headers: dict[str, str], body: str) -> dict[str
 def _fetch_payload(sql: str, datasource_name: str, config: SqlFetchConfig) -> dict[str, Any]:
     return {
         "sql": sanitize_sql(sql),
-        "catalog_name": get_catalog_name(datasource_name, config.environment),
+        "catalog_name": get_catalog_name(datasource_name, config.skillhub_env),
         "timeout_in_second": config.timeout,
     }
 

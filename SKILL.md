@@ -36,8 +36,7 @@ entrypoint: manage-tracking
 - `cli-capabilities.csv`
 - `.skillhubignore`
 - `manage_tracking/`
-- `references/prod/tracking-wiki/`
-- `references/ainvest/tracking-wiki/`
+- `references/tracking-wiki/`
 - `scripts/sync_tracking_wiki_refs.sh`
 
 ## 先判断是否可用
@@ -58,23 +57,20 @@ manage-tracking --json config show
 
 ## 环境与认证
 
-- 业务环境支持 `dev`、`test`、`prod`、`dreamface`、`ainvest`
-- 根命令支持 `--env`、`--url`、`--cert-path`、`--cert-password`、`--token`
-- SkillHub 安装环境通过 `$HOME/.skillhub-cli/config.json` 中的 `skillhub_env` 感知，也支持 `SKILLHUB_ENV` 覆盖
-- `skillhub_env=office/prod` 时，默认访问地址由代码中的 `manage_tracking/env.py` 决定：
-  - `office -> DEFAULT_SKILLHUB_BASE_URLS["office"]`
-  - `prod -> DEFAULT_SKILLHUB_BASE_URLS["prod"]`
-- 如需覆盖代码默认值，可配置 skill 私有文件中的 `office_base_url` / `prod_base_url`
-- 如果存在 `$HOME/.skillhub-cli/config.json`，wrapper 会自动读取：
+- 运行环境只读取 SkillHub 共享配置中的 `skillhub_env`，也支持 `SKILLHUB_ENV` 覆盖
+- `skillhub_env` 支持 `office`、`prod`
+- 访问地址按 `skillhub_env` 自动选择，不再支持技能私有环境配置或 session 持久化
+- CLI 优先读取 `$HOME/.skillhub-cli/config.json`；如果不存在，再读取 `/root/.skillhub-cli/config.json`
+- 共享配置中会读取：
+  - `skillhub_env`
   - `ssl_cert_file`
   - `ssl_cert_password`
   - `user_email`
-- skill 私有配置位于 `$HOME/.skillhub-cli/skills-conf/manage-tracking/`
 
 常用命令：
 
 ```sh
-manage-tracking --env prod app list
+manage-tracking app list
 manage-tracking --json track list --app-id 12
 manage-tracking track search home_click
 manage-tracking config show
@@ -110,42 +106,38 @@ App
 
 ## 内置埋点知识库
 
-当前 skill 内置了按环境区分的埋点知识库：
+当前 skill 只内置一份 ainvest 埋点知识库，入口在：
 
-- prod：`references/prod/tracking-wiki/index.md`
-- ainvest：`references/ainvest/tracking-wiki/index.md`
+- `references/tracking-wiki/index.md`
 
-每个环境知识库都包含：
+知识库包含：
 
 - `concepts/query-playbook.md` — 查询策略
 - `concepts/snapshot-sync.md` — 快照来源和同步说明
-- `entities/lookups/` — 页面 / 区块 / 元素反查索引
-- `entities/apps/` — 按应用聚合的页面和埋点清单
-
-ainvest 额外包含：
-
 - `concepts/relation-model.md` — `track_info_realtion.csv` 的前后序关系语义
-- `entities/relations/high-degree-tracks.md` — 高连接埋点
-- `entities/relations/relation-components.md` — 关系连通分量
+- `entities/lookups/` — 页面 / 区块 / 元素反查索引
+- `entities/apps/` — 按应用聚合的页面、埋点清单和字段明细
+- `entities/relations/` — 高连接埋点和关系连通分量
 
 知识库适合处理这些问题：
 
 - 用户只给了页面名、区块名、元素名、按钮名或业务场景，没有直接给 `trackKey`
 - 需要先做页面 / 区块 / 元素反查，再按应用枚举候选
 - 需要快速浏览某个应用下的页面级埋点和元素级埋点分布
-- 在 ainvest 中，需要查询某个埋点的前序 / 后序关系
+- 需要查看某个埋点的额外字段中文名、英文名和备注
+- 需要查询某个埋点的前序 / 后序关系
 
 ## 知识库联动流程
 
 当用户没有直接提供 `trackKey`，而是用自然语言描述埋点时，优先按下面顺序执行：
 
-1. 先判断用户要查的环境：明确提到 `ainvest`、`AInvest`、北美、海外或相关业务线时读 `references/ainvest/tracking-wiki/index.md`，否则默认读 `references/prod/tracking-wiki/index.md`。
-2. 再读对应环境的 `concepts/query-playbook.md`，按知识库约定的查询顺序定位候选。
+1. 先读 `references/tracking-wiki/index.md`，确认可用的概念页、反查索引、应用文档和关系文档。
+2. 再读 `references/tracking-wiki/concepts/query-playbook.md`，按知识库约定的查询顺序定位候选。
 3. 必须先做跨应用反查，不要因为用户提到 `aime` 就只读 `app-23-aime.md`：
    - 先搜 `entities/lookups/page-lookup.md`，找出同名或近似页面在所有应用中的分布。
    - 再搜 `entities/lookups/section-lookup.md` 和 `entities/lookups/element-lookup.md`，找出同名区块和元素的全局候选。
-   - 然后按候选里的 `appSign` / 应用名进入对应 `entities/apps/app-*.md`，读取实际埋点清单。
-   - 如果 ainvest 问题涉及前后序关系，再搜 `entities/relations/`，补充高连接埋点和关系覆盖情况。
+   - 然后按候选里的 `appSign` / 应用名进入对应 `entities/apps/app-*.md`，读取实际埋点清单和字段明细。
+   - 如果问题涉及前后序关系，再搜 `entities/relations/`，补充高连接埋点和关系覆盖情况。
 4. 同一个页面、区块或元素可能同时存在于多个应用，例如 `aime无处不在` 可出现在 `aime`、`lhsa`、`lhssc`、`lhsps`、`lhspt`、`lhsws` 等应用中；必须保留这些候选，不能只返回某一个应用的结果。
 5. 找到候选后，如果当前 CLI 支持该运行环境，再调用 `manage-tracking --json` 的只读命令做实时确认。
 6. 如果知识库结果和 CLI 实时返回不一致，以 CLI 结果为准，并明确说明知识库是快照数据。
@@ -166,31 +158,19 @@ manage-tracking track search <keyword>
 - 返回候选埋点时，尽量同时给出 `trackKey`、所属应用、页面 / 区块 / 元素归属。
 - 如果存在多个应用或业务线候选，必须全部列出并说明差异；除非用户明确指定应用，否则不要自动丢弃候选。
 - 如果只匹配到页面级埋点，不要臆造区块级或元素级埋点。
-- 如果问题涉及前序 / 后序动作关系，prod 不能仅根据结构推断；ainvest 可引用 `track_info_realtion.csv` 生成的实际关系，但要说明其快照口径限制。
+- 如果问题涉及前序 / 后序动作关系，可引用 `track_info_realtion.csv` 生成的实际关系，但要说明其快照口径限制。
 
 ## 知识库同步
 
-内置知识库不是实时数据。快照时间和导出范围以对应环境的 `concepts/snapshot-sync.md` 为准。
-
-prod wiki 当前位于：
+内置知识库不是实时数据。当前只保留一份 ainvest 快照，位置为：
 
 ```text
-references/prod/tracking-wiki/
+references/tracking-wiki/
 ```
 
-ainvest wiki 当前位于：
+快照时间、导出范围和源文件以 `references/tracking-wiki/concepts/snapshot-sync.md` 为准。
 
-```text
-references/ainvest/tracking-wiki/
-```
-
-刷新 prod 快照时可继续使用：
-
-```sh
-scripts/sync_tracking_wiki_refs.sh <source-wiki-root> references/prod/tracking-wiki
-```
-
-ainvest 当前由下载目录 CSV 生成；重新导出 CSV 后，需要重新生成 `references/ainvest/tracking-wiki/`。
+重新导出 CSV 后，用相同文件名放到 `/Users/zyhjr/Downloads`，再重新生成 `references/tracking-wiki/`。
 
 ## 重要行为
 

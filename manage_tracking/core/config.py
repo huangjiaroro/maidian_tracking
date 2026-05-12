@@ -4,86 +4,42 @@ from __future__ import annotations
 
 import base64
 import hashlib
-import json
-import os
 import subprocess
-from dataclasses import asdict, dataclass, field
-from pathlib import Path
+from dataclasses import dataclass
 from typing import Optional
 
 from manage_tracking.env import (
-    default_manage_tracking_environment,
+    read_shared_skillhub_config,
     read_skillhub_env,
+    resolve_shared_skillhub_config_file,
 )
 
 
-DEFAULT_ENVIRONMENTS = {
-    "dev": "http://localhost:9854",
-    "test": "http://localhost:9854",
-    "prod": "https://phonestat.hexin.cn/maidian/server",
-    "dreamface": "https://115.236.100.148:7553/maidian/server",
-    "ainvest": "https://cbas-gateway.ainvest.com:1443/maidian/server",
+SKILLHUB_BASE_URLS = {
+    "office": "https://phonestat.hexin.cn/maidian/server",
+    "prod": "http://172.21.54.74:28000",
 }
-SKILLHUB_PROD_BASE_URL = "http://172.21.54.74:28000"
-
-SKILLS_CONF_ROOT = Path.home() / ".skillhub-cli" / "skills-conf"
-DEFAULT_SESSION_FILE = SKILLS_CONF_ROOT / "manage-tracking" / "session.json"
-SESSION_FILE = Path(
-    os.environ.get("MANAGE_TRACKING_SESSION_FILE", str(DEFAULT_SESSION_FILE))
-).expanduser()
-
-
-def _default_environment() -> str:
-    return default_manage_tracking_environment()
-
-
-def resolve_initialized_base_url(environment: Optional[str] = None) -> str:
-    """Centralized base URL initialization.
-
-    - skillhub_env=prod: always use the fixed prod gateway
-    - skillhub_env=office: use the business environment mapping
-    """
-
-    if read_skillhub_env() == "prod":
-        return SKILLHUB_PROD_BASE_URL
-
-    env_name = (environment or _default_environment()).strip().lower()
-    if env_name in DEFAULT_ENVIRONMENTS:
-        return DEFAULT_ENVIRONMENTS[env_name]
-
-    return DEFAULT_ENVIRONMENTS[_default_environment()]
-
-
-def _default_base_url() -> str:
-    return resolve_initialized_base_url(_default_environment()).rstrip("/")
 
 
 @dataclass
-class SessionConfig:
-    """Session configuration stored on disk."""
+class RuntimeConfig:
+    """SkillHub-derived runtime configuration."""
 
-    environment: str = field(default_factory=_default_environment)
-    base_url: str = field(default_factory=_default_base_url)
+    skillhub_env: str
+    base_url: str
+    config_path: str
     cert_path: Optional[str] = None
     cert_password: Optional[str] = None
-    token: Optional[str] = None
     email: Optional[str] = None
 
-    def save(self, path: Path = SESSION_FILE) -> None:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(asdict(self), indent=2), encoding="utf-8")
-
-    @classmethod
-    def load(cls, path: Path = SESSION_FILE) -> "SessionConfig":
-        if not path.exists():
-            return cls()
-
-        try:
-            data = json.loads(path.read_text(encoding="utf-8"))
-        except Exception:
-            return cls()
-
-        return cls(**{key: value for key, value in data.items() if value is not None})
+    def status(self) -> dict[str, object]:
+        return {
+            "skillhub_env": self.skillhub_env,
+            "config_path": self.config_path,
+            "base_url": self.base_url,
+            "has_cert": bool(self.cert_path and self.cert_password),
+            "email": self.email,
+        }
 
 
 @dataclass
@@ -93,18 +49,38 @@ class CliConfig:
     base_url: str
     cert_path: Optional[str] = None
     cert_password: Optional[str] = None
-    token: Optional[str] = None
+    email: Optional[str] = None
     json_output: bool = False
     debug: bool = False
 
-    def to_session_config(self, environment: str) -> SessionConfig:
-        return SessionConfig(
-            environment=environment,
-            base_url=self.base_url,
-            cert_path=self.cert_path,
-            cert_password=self.cert_password,
-            token=self.token,
-        )
+
+def _optional_str(value: object) -> Optional[str]:
+    if value is None:
+        return None
+    text = str(value).strip()
+    return text or None
+
+
+def resolve_skillhub_base_url(skillhub_env: Optional[str] = None) -> str:
+    """Resolve the management API base URL from SkillHub environment only."""
+
+    env_name = (skillhub_env or read_skillhub_env()).strip().lower()
+    return SKILLHUB_BASE_URLS.get(env_name, SKILLHUB_BASE_URLS["office"]).rstrip("/")
+
+
+def load_runtime_config() -> RuntimeConfig:
+    """Load runtime configuration from SkillHub shared config without persistence."""
+
+    shared_config = read_shared_skillhub_config()
+    skillhub_env = read_skillhub_env()
+    return RuntimeConfig(
+        skillhub_env=skillhub_env,
+        base_url=resolve_skillhub_base_url(skillhub_env),
+        config_path=str(resolve_shared_skillhub_config_file()),
+        cert_path=_optional_str(shared_config.get("ssl_cert_file")),
+        cert_password=_optional_str(shared_config.get("ssl_cert_password")),
+        email=_optional_str(shared_config.get("user_email")),
+    )
 
 
 def get_p12_cert_fingerprint(cert_path: str, password: str) -> str:
@@ -156,31 +132,3 @@ def get_p12_cert_fingerprint(cert_path: str, password: str) -> str:
         raise RuntimeError(f"Failed to decode certificate: {exc}") from exc
 
     return hashlib.md5(cert_der).hexdigest().upper()
-
-
-def resolve_base_url(url: Optional[str], env: Optional[str], session: SessionConfig) -> str:
-    """Resolve the runtime base URL."""
-
-    if url:
-        return url.rstrip("/")
-
-    if session.base_url:
-        return session.base_url.rstrip("/")
-
-    return resolve_initialized_base_url(env or session.environment).rstrip("/")
-
-
-def resolve_cert(
-    cert_path: Optional[str],
-    cert_password: Optional[str],
-    session: SessionConfig,
-) -> tuple[Optional[str], Optional[str]]:
-    """Resolve certificate configuration."""
-
-    path = cert_path or session.cert_path or os.environ.get("MANAGE_TRACKING_CERT_PATH")
-    password = (
-        cert_password
-        or session.cert_password
-        or os.environ.get("MANAGE_TRACKING_CERT_PASSWORD")
-    )
-    return path, password

@@ -6,4 +6,3 @@ __pycache__/
 *.egg-info/
 wheelhouse/
 assets/agent-harness/
-references/tracking-wiki/
