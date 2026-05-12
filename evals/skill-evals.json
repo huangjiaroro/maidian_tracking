@@ -12,6 +12,11 @@
       "id": "positive-natural-language-lookup",
       "prompt": "AInvest 里 aime 无处不在按钮对应哪些埋点？不要漏掉其他应用候选",
       "expect_load": true,
+      "expected_stages": [
+        "INIT",
+        "LOOKUP",
+        "APP_CONFIRM"
+      ],
       "expected_file_reads": [
         "references/tracking-wiki/index.md",
         "references/tracking-wiki/concepts/query-playbook.md",
@@ -19,6 +24,20 @@
         "references/tracking-wiki/entities/lookups/section-lookup.md",
         "references/tracking-wiki/entities/lookups/element-lookup.md"
       ],
+      "expected_tool_order": [
+        "skill_view:name",
+        "skill_view:file:index",
+        "skill_view:file:query-playbook",
+        "search_or_read:lookups",
+        "search_or_read:app"
+      ],
+      "forbidden_tools": [
+        "execute_code",
+        "terminal:grep",
+        "terminal:sed",
+        "terminal:ls"
+      ],
+      "max_tool_calls": 8,
       "reason": "Natural-language tracking lookup requires the AInvest wiki and cross-app lookups."
     },
     {
@@ -54,6 +73,46 @@
         "references/tracking-wiki/entities/apps/app-12-lhsa.md"
       ],
       "reason": "Exact element/section lookup hits should be resolved from the app wiki file instead of CLI pagination."
+    },
+    {
+      "id": "positive-wiki-miss-cli-fallback",
+      "prompt": "wiki 里没查到 aime_unknown_toggle 这个埋点，请用 tracking-query CLI 精准复核，不要扫分页列表",
+      "expect_load": true,
+      "expected_stages": [
+        "INIT",
+        "LOOKUP",
+        "CLI_FALLBACK"
+      ],
+      "expected_cli_commands": [
+        "tracking-query track search <keyword>",
+        "tracking-query --json track get-by-key --key <trackKey>"
+      ],
+      "expected_tool_order": [
+        "skill_view:name",
+        "skill_view:file:index",
+        "skill_view:file:query-playbook",
+        "terminal:tracking-query track search <keyword>",
+        "terminal:tracking-query --json track get-by-key --key <trackKey>"
+      ],
+      "forbidden_tools": [
+        "execute_code",
+        "terminal:grep",
+        "terminal:sed",
+        "terminal:ls"
+      ],
+      "forbidden_cli_commands": [
+        "tracking-query app list",
+        "tracking-query page list",
+        "tracking-query section list",
+        "tracking-query element list",
+        "tracking-query track list"
+      ],
+      "expected_recovery_behavior": [
+        "prefer_precise_cli_commands",
+        "no_paginated_list_scan"
+      ],
+      "max_tool_calls": 7,
+      "reason": "When wiki misses, the skill should fall back to precise read-only CLI commands instead of paginated list scanning."
     },
     {
       "id": "negative-generic-bi-analysis",
@@ -94,6 +153,122 @@
         "references/tracking-wiki/entities/lookups/element-lookup.md"
       ],
       "reason": "Natural-language lookup requires the bundled tracking wiki indexes."
+    },
+    {
+      "id": "tracking-continuation-no-reload",
+      "prompt": "上一个问题已经读过 index 和 query-playbook 了，继续查 aime 思考模式切换相关埋点",
+      "expected_stages": [
+        "FOLLOWUP",
+        "APP_CONFIRM"
+      ],
+      "expected_file_reads": [
+        "references/tracking-wiki/entities/lookups/section-lookup.md",
+        "references/tracking-wiki/entities/lookups/element-lookup.md",
+        "references/tracking-wiki/entities/apps/app-23-aime.md",
+        "references/tracking-wiki/entities/apps/app-12-lhsa.md"
+      ],
+      "expected_tool_order": [
+        "reuse_current_candidates",
+        "search_or_read:lookups",
+        "search_or_read:app"
+      ],
+      "forbidden_tools": [
+        "skill_view:name",
+        "skill_view:file:index",
+        "skill_view:file:query-playbook",
+        "execute_code"
+      ],
+      "forbidden_file_reads": [
+        "references/tracking-wiki/index.md",
+        "references/tracking-wiki/concepts/query-playbook.md"
+      ],
+      "expected_answer_fields": [
+        "track_key",
+        "app",
+        "page",
+        "section",
+        "element"
+      ],
+      "max_tool_calls": 6,
+      "reason": "Continuation turns should reuse current candidates and must not restart from the entry documents."
+    },
+    {
+      "id": "tracking-path-error-recovery",
+      "prompt": "刚才读取 entities/lookups/element-lookup.md 失败了，继续查 aime 对话页模型切换相关埋点，并改用 skill 里的完整路径",
+      "expected_stages": [
+        "ERROR_RECOVERY",
+        "LOOKUP",
+        "APP_CONFIRM"
+      ],
+      "expected_file_reads": [
+        "references/tracking-wiki/entities/lookups/section-lookup.md",
+        "references/tracking-wiki/entities/lookups/element-lookup.md",
+        "references/tracking-wiki/entities/apps/app-23-aime.md"
+      ],
+      "expected_tool_order": [
+        "fix_file_path",
+        "retry_same_lookup",
+        "search_or_read:app"
+      ],
+      "forbidden_tools": [
+        "skill_view:name",
+        "skill_view:file:index",
+        "skill_view:file:query-playbook"
+      ],
+      "forbidden_file_reads": [
+        "references/tracking-wiki/index.md",
+        "references/tracking-wiki/concepts/query-playbook.md"
+      ],
+      "expected_answer_fields": [
+        "track_key",
+        "app",
+        "page",
+        "section",
+        "element"
+      ],
+      "expected_tool_behaviors": [
+        "do_not_reload_skill",
+        "fix_file_path_and_continue"
+      ],
+      "expected_recovery_behavior": [
+        "fix_full_path",
+        "resume_previous_stage"
+      ],
+      "max_tool_calls": 6,
+      "reason": "Linked-file path failures should be recovered by correcting the full path and continuing the current query."
+    },
+    {
+      "id": "cli-help-first-before-element-list",
+      "prompt": "需要用 CLI 查某个 section 下的 element，但不确定 element list 支持哪些参数。先看 help，再查询，不要猜 app-id 和 page-id 过滤。",
+      "expect_load": true,
+      "expected_stages": [
+        "CLI_FALLBACK",
+        "ERROR_RECOVERY"
+      ],
+      "expected_tool_order": [
+        "terminal:tracking-query element list --help",
+        "terminal:tracking-query --json element list --section-id <sectionId>"
+      ],
+      "expected_cli_commands": [
+        "tracking-query element list --help",
+        "tracking-query --json element list --section-id <sectionId>"
+      ],
+      "forbidden_cli_commands": [
+        "tracking-query --json element get --element-id <elementId>",
+        "tracking-query --json element list --app-id <appId> --page-id <pageId>"
+      ],
+      "forbidden_tools": [
+        "execute_code",
+        "terminal:grep",
+        "terminal:sed",
+        "terminal:ls"
+      ],
+      "expected_recovery_behavior": [
+        "help_first_when_cli_args_unclear",
+        "avoid_unsupported_subcommands"
+      ],
+      "max_tool_calls": 4,
+      "reason": "When CLI parameters are uncertain, the agent should read help first and avoid unsupported element commands."
     }
   ]
 }
